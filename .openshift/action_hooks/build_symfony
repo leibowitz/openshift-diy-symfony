@@ -1,0 +1,52 @@
+#!/bin/sh
+
+function install_vendor() {
+    local php_bin=${ROOT_DIR}/php5/bin/php
+    local pkg=composer.phar
+
+    mkdir -p ${ROOT_DIR}/.composer
+    export COMPOSER_HOME=${ROOT_DIR}/.composer
+
+    pushd ${OPENSHIFT_REPO_DIR}/
+
+    echo "Downloading ${pkg}."
+    wget http://getcomposer.org/${pkg}
+
+    echo "Composer install."
+    ${php_bin} ${pkg} -n install -o
+
+    popd
+}
+
+function symfony_init() {
+    local php_bin=${ROOT_DIR}/php5/bin/php
+
+    pushd ${OPENSHIFT_REPO_DIR}/
+
+    # Create cache dir if needed
+    if [ ! -d ${OPENSHIFT_REPO_DIR}/app/cache ]; then
+        mkdir ${OPENSHIFT_REPO_DIR}/app/cache
+    fi
+    chmod -v 777 ${OPENSHIFT_REPO_DIR}/app/cache
+
+    # Create logs dir if needed
+    if [ ! -d ${OPENSHIFT_REPO_DIR}/app/logs ]; then
+        mkdir ${OPENSHIFT_REPO_DIR}/app/logs
+    fi
+    chmod -v 777 ${OPENSHIFT_REPO_DIR}/app/logs
+
+    # Setup cache
+    ${php_bin} app/console cache:clear -n --env=prod --no-debug
+
+    # Setup assets/assetic
+    ${php_bin} app/console assets:install -n --env=prod --no-debug web
+    ${php_bin} app/console assetic:dump -n --env=prod --no-debug web
+
+    popd
+}
+
+function check_symfony() {
+    install_vendor
+
+    symfony_init
+}

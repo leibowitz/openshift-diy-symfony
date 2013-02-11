@@ -105,10 +105,16 @@ http {
         # https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
         add_header Strict-Transport-Security max-age=691200;
 
+
+        set $http_x_forwarded_port 80;
+        if ($http_x_forwarded_proto = "https") {
+            set $http_x_forwarded_port 443;
+        }
+
         location / {
             index  index.html  index.htm  index.php ;
 
-            try_files $uri $uri/ @rewrites;
+            try_files $uri @rewrites;
         }
 
         location = /robots.txt  { access_log off; log_not_found off; }
@@ -128,13 +134,14 @@ http {
         }
 
         location @rewrites {
-            rewrite ^(.*)$ /index.php/$1 last;
+            rewrite ^(.*)$ /app.php/$1 last;
         }
 
         # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-        location ~ ^/index\.php(/|$) {
+        location ~ ^/app\.php(/|$) {
             fastcgi_pass unix:${OPENSHIFT_RUN_DIR}/php-fpm.socket;
 
+            fastcgi_param HTTP_X_FORWARDED_PORT $http_x_forwarded_port;
             fastcgi_param SCRIPT_FILENAME    $document_root$fastcgi_script_name;
             fastcgi_param PATH_INFO $fastcgi_script_name;
 
