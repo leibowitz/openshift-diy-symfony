@@ -66,6 +66,8 @@ function install_twig() {
 }
 
 function symfony_init() {
+    source ${OPENSHIFT_REPO_DIR}/.openshift/bash_symfony
+
     local php_bin=${ROOT_DIR}/php5/bin/php
     local composer_bin=${ROOT_DIR}/bin/composer.phar
 
